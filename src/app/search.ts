@@ -194,3 +194,49 @@ export async function searchWithEmbeddings(
 
 // Phase 3: Hybrid Search with Reciprocal Rank Fusion
 // --------------------------------------------------
+// src/app/search.ts
+// ADDED: RRF parameter for rank fusion
+// The lower the K, the stricter the search- (TODO: figure out what tha means exactly)
+const RRF_K = 60;
+
+// ADDED: Combines multiple ranking lists using position-based scoring
+export function reciprocalRankFusion(
+  rankings: { video: Video; score: number }[][],
+): { video: Video; score: number }[] {
+  const rrfScores = new Map<string, number>();
+  const videoMap = new Map<string, Video>();
+
+  // Process each ranking list (BM25 and embeddings)
+  rankings.forEach((ranking) => {
+    ranking.forEach((item, rank) => {
+      const currentScore = rrfScores.get(item.video.id) || 0;
+
+      // Position-based scoring: 1/(k+rank)
+      const contribution = 1 / (RRF_K + rank);
+      rrfScores.set(item.video.id, currentScore + contribution);
+
+      videoMap.set(item.video.id, item.video);
+    });
+  });
+
+  // Sort by combined RRF score descending
+  return Array.from(rrfScores.entries())
+    .sort(([, scoreA], [, scoreB]) => scoreB - scoreA)
+    .map(([videoId, score]) => ({
+      score,
+      video: videoMap.get(videoId)!,
+    }));
+}
+
+export async function searchWithRRF(
+  query: string,
+  videos: Video[],
+) {
+  const bm25Ranking = await searchWithBM25(
+    query.toLowerCase().split(" "),
+    videos,
+  );
+  const embeddingRanking = await searchWithEmbeddings(query, videos);
+  const rrfRanking = reciprocalRankFusion([bm25Ranking, embeddingRanking]);
+  return rrfRanking;
+}
