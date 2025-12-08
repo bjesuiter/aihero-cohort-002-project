@@ -28,6 +28,18 @@ interface VideosData {
   videos: Video[];
 }
 
+// Unified scoring interface - each search type populates its relevant score
+export interface VideoScores {
+  bm25?: number;
+  semantic?: number;
+  rrf?: number;
+}
+
+export interface ScoredVideo {
+  video: Video;
+  scores: VideoScores;
+}
+
 /**
  * Converts a video to its text representation for search/embedding purposes.
  * Ensures consistent formatting across BM25 and embedding generation.
@@ -55,17 +67,20 @@ export async function loadVideos(): Promise<Video[]> {
 export const searchWithBM25 = async (
   keywords: string[],
   videos: Video[],
-) => {
+): Promise<ScoredVideo[]> => {
   const corpus = videos.map(videoObjectToText);
 
-  const scores: number[] = (BM25 as any)(
+  const rawScores: number[] = (BM25 as any)(
     corpus,
     keywords,
   );
-  // Map scores to emails, sort descending
-  return scores
-    .map((score, idx) => ({ score, video: videos[idx] }))
-    .sort((a, b) => b.score - a.score);
+  // Map scores to videos with named bm25 score, sort descending
+  return rawScores
+    .map((score, idx) => ({
+      video: videos[idx],
+      scores: { bm25: score },
+    }))
+    .sort((a, b) => (b.scores.bm25 ?? 0) - (a.scores.bm25 ?? 0));
 };
 
 // Phase 2: Embedding Search
@@ -163,7 +178,7 @@ export async function loadOrGenerateEmbeddings(
 export async function searchWithEmbeddings(
   query: string,
   videos: Video[],
-) {
+): Promise<ScoredVideo[]> {
   // Should load the pre-cached embeddings for the videos
   const embeddings = await loadOrGenerateEmbeddings(videos);
 
@@ -173,15 +188,20 @@ export async function searchWithEmbeddings(
     value: query,
   });
 
-  const videosWithScores = embeddings.map(({ id: videoId, embedding }) => {
-    const video = videos.find((video) => video.id === videoId)!;
-    const score = cosineSimilarity(queryEmbedding, embedding);
-    return { score, video };
-  });
+  const videosWithScores: ScoredVideo[] = embeddings.map(
+    ({ id: videoId, embedding }) => {
+      const video = videos.find((video) => video.id === videoId)!;
+      const score = cosineSimilarity(queryEmbedding, embedding);
+      return {
+        video,
+        scores: { semantic: score },
+      };
+    },
+  );
 
   // Sort by score descending
   const sortedVideosWithScores = videosWithScores.sort((a, b) =>
-    b.score - a.score
+    (b.scores.semantic ?? 0) - (a.scores.semantic ?? 0)
   );
 
   console.log(
@@ -201,44 +221,60 @@ export async function searchWithEmbeddings(
 // In your code, RRF_K = 60 gives a balanced weighting across positions.
 const RRF_K = 60;
 
-// ADDED: Combines multiple ranking lists using position-based scoring
+// Combines multiple ranking lists using position-based scoring
+// Preserves underlying scores from each ranking (bm25, semantic) alongside the RRF score
 export function reciprocalRankFusion(
-  rankings: { video: Video; score: number }[][],
-): { video: Video; score: number }[] {
+  rankings: ScoredVideo[][],
+): ScoredVideo[] {
   const rrfScores = new Map<string, number>();
   const videoMap = new Map<string, Video>();
+  const underlyingScores = new Map<string, VideoScores>();
 
   // Process each ranking list (BM25 and embeddings)
   rankings.forEach((ranking) => {
     ranking.forEach((item, rank) => {
-      const currentScore = rrfScores.get(item.video.id) || 0;
+      const currentRrfScore = rrfScores.get(item.video.id) || 0;
 
       // Position-based scoring: 1/(k+rank)
       const contribution = 1 / (RRF_K + rank);
-      rrfScores.set(item.video.id, currentScore + contribution);
+      rrfScores.set(item.video.id, currentRrfScore + contribution);
 
-      videoMap.set(item.video.id, item.video);
+      // Only set if not already present (video object is identical across rankings)
+      if (!videoMap.has(item.video.id)) {
+        videoMap.set(item.video.id, item.video);
+      }
+
+      // Merge underlying scores from this ranking into the accumulated scores
+      const existingScores = underlyingScores.get(item.video.id) || {};
+      underlyingScores.set(item.video.id, {
+        ...existingScores,
+        ...item.scores,
+      });
     });
   });
 
   // Sort by combined RRF score descending
   return Array.from(rrfScores.entries())
     .sort(([, scoreA], [, scoreB]) => scoreB - scoreA)
-    .map(([videoId, score]) => ({
-      score,
+    .map(([videoId, rrfScore]) => ({
       video: videoMap.get(videoId)!,
+      scores: {
+        ...underlyingScores.get(videoId),
+        rrf: rrfScore,
+      },
     }));
 }
 
 export async function searchWithRRF(
   query: string,
   videos: Video[],
-) {
+): Promise<ScoredVideo[]> {
   const bm25Ranking = await searchWithBM25(
     query.toLowerCase().split(" "),
     videos,
   );
   const embeddingRanking = await searchWithEmbeddings(query, videos);
+  // RRF fusion preserves underlying bm25 and semantic scores, plus adds rrf score
   const rrfRanking = reciprocalRankFusion([bm25Ranking, embeddingRanking]);
   return rrfRanking;
 }

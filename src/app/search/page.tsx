@@ -4,6 +4,7 @@ import {
   loadOrGenerateEmbeddings,
   searchWithEmbeddings,
   searchWithRRF,
+  ScoredVideo,
 } from "@/app/search";
 import { SideBar } from "@/components/side-bar";
 import { TopBar } from "@/components/top-bar";
@@ -35,7 +36,7 @@ export default async function SearchPage(props: {
   await loadOrGenerateEmbeddings(allVideos);
 
   // Perform search based on searchType
-  let videosWithScores;
+  let videosWithScores: ScoredVideo[];
   switch (searchType) {
     case "bm25":
       videosWithScores = await searchWithBM25(
@@ -53,44 +54,19 @@ export default async function SearchPage(props: {
   }
 
   // Transform videos to match the expected format
-  const transformedVideos = videosWithScores
-    .map(({ score, video }) => {
-      const scores: { bm25?: number; semantic?: number; rrf?: number } = {};
-      if (searchType === "bm25") {
-        scores.bm25 = score;
-      } else if (searchType === "semantic") {
-        scores.semantic = score;
-      } else {
-        scores.rrf = score;
-      }
-      return {
-        id: video.id,
-        from: video.channelTitle,
-        subject: video.title,
-        preview: video.description.substring(0, 100) + "...",
-        content: video.description,
-        date: video.publishedAt,
-        url: `https://www.youtube.com/watch?v=${video.id}`,
-        thumbnail: video.thumbnails.default.url,
-        scores,
-      };
-    })
-    .sort((a, b) => {
-      // Sort by the score type specified in searchType parameter
-      const aScore =
-        searchType === "bm25"
-          ? (a.scores.bm25 ?? 0)
-          : searchType === "semantic"
-            ? (a.scores.semantic ?? 0)
-            : (a.scores.rrf ?? 0);
-      const bScore =
-        searchType === "bm25"
-          ? (b.scores.bm25 ?? 0)
-          : searchType === "semantic"
-            ? (b.scores.semantic ?? 0)
-            : (b.scores.rrf ?? 0);
-      return bScore - aScore;
-    });
+  // Scores are already correctly populated by each search function
+  // Sorting is already done by each search function
+  const transformedVideos = videosWithScores.map(({ video, scores }) => ({
+    id: video.id,
+    from: video.channelTitle,
+    subject: video.title,
+    preview: video.description.substring(0, 100) + "...",
+    content: video.description,
+    date: video.publishedAt,
+    url: `https://www.youtube.com/watch?v=${video.id}`,
+    thumbnail: video.thumbnails.default.url,
+    scores,
+  }));
 
   const filteredVideos = transformedVideos.filter((video) => {
     // Filter based on any score > 0.0
