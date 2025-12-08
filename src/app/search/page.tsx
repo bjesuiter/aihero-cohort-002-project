@@ -35,12 +35,22 @@ export default async function SearchPage(props: {
   await loadOrGenerateEmbeddings(allVideos);
 
   // Perform search based on searchType
-  const videosWithScores =
-    searchType === "bm25"
-      ? await searchWithBM25(query.toLowerCase().split(" "), allVideos)
-      : searchType === "semantic"
-        ? await searchWithEmbeddings(query, allVideos)
-        : await searchWithRRF(query, allVideos);
+  let videosWithScores;
+  switch (searchType) {
+    case "bm25":
+      videosWithScores = await searchWithBM25(
+        query.toLowerCase().split(" "),
+        allVideos
+      );
+      break;
+    case "semantic":
+      videosWithScores = await searchWithEmbeddings(query, allVideos);
+      break;
+    case "rrf":
+    default:
+      videosWithScores = await searchWithRRF(query, allVideos);
+      break;
+  }
 
   // Transform videos to match the expected format
   const transformedVideos = videosWithScores
@@ -69,16 +79,16 @@ export default async function SearchPage(props: {
       // Sort by the score type specified in searchType parameter
       const aScore =
         searchType === "bm25"
-          ? a.scores.bm25 ?? 0
+          ? (a.scores.bm25 ?? 0)
           : searchType === "semantic"
-            ? a.scores.semantic ?? 0
-            : a.scores.rrf ?? 0;
+            ? (a.scores.semantic ?? 0)
+            : (a.scores.rrf ?? 0);
       const bScore =
         searchType === "bm25"
-          ? b.scores.bm25 ?? 0
+          ? (b.scores.bm25 ?? 0)
           : searchType === "semantic"
-            ? b.scores.semantic ?? 0
-            : b.scores.rrf ?? 0;
+            ? (b.scores.semantic ?? 0)
+            : (b.scores.rrf ?? 0);
       return bScore - aScore;
     });
 
