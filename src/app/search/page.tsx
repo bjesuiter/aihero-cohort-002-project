@@ -1,4 +1,8 @@
-import { loadVideos, searchWithBM25 } from "@/app/search";
+import {
+  loadVideos,
+  searchWithBM25,
+  loadOrGenerateEmbeddings,
+} from "@/app/search";
 import { SideBar } from "@/components/side-bar";
 import { TopBar } from "@/components/top-bar";
 import { loadChats, loadMemories } from "@/lib/persistence-layer";
@@ -16,7 +20,9 @@ export default async function SearchPage(props: {
   const page = Number(searchParams.page) || 1;
   const perPage = Number(searchParams.perPage) || 10;
 
+  // Load necessary data
   const allVideos = await loadVideos();
+  const embeddings = await loadOrGenerateEmbeddings(allVideos);
 
   const videosWithScores = await searchWithBM25(
     query.toLowerCase().split(" "),
