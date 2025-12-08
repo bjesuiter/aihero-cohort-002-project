@@ -3,7 +3,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  MailIcon,
+  FileIcon,
   ChevronDownIcon,
   ChevronUpIcon,
   ExternalLinkIcon,
@@ -12,7 +12,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
-type Email = {
+type ListItem = {
   id: string;
   from: string;
   subject: string;
@@ -23,7 +23,7 @@ type Email = {
   thumbnail: string;
 };
 
-function EmailCard({ email }: { email: Email }) {
+function ListItemCard({ item }: { item: ListItem }) {
   const [expanded, setExpanded] = useState(false);
 
   const formatDate = (dateString: string) => {
@@ -42,8 +42,8 @@ function EmailCard({ email }: { email: Email }) {
       <div className="flex items-start gap-3">
         <div className="mt-0.5 flex-shrink-0">
           <Image
-            src={email.thumbnail}
-            alt={email.subject}
+            src={item.thumbnail}
+            alt={item.subject}
             width={120}
             height={90}
             className="rounded"
@@ -52,13 +52,11 @@ function EmailCard({ email }: { email: Email }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-4 mb-1">
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-base mb-0.5">
-                {email.subject}
-              </h3>
+              <h3 className="font-semibold text-base mb-0.5">{item.subject}</h3>
               <div className="flex items-center gap-2">
-                <p className="text-xs text-muted-foreground">{email.from}</p>
+                <p className="text-xs text-muted-foreground">{item.from}</p>
                 <Link
-                  href={email.url}
+                  href={item.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs text-primary hover:underline flex items-center gap-1"
@@ -69,19 +67,19 @@ function EmailCard({ email }: { email: Email }) {
               </div>
             </div>
             <span className="text-xs text-muted-foreground whitespace-nowrap">
-              {formatDate(email.date)}
+              {formatDate(item.date)}
             </span>
           </div>
 
           <p className="text-sm text-foreground/80 mt-2 line-clamp-2">
-            {email.preview}
+            {item.preview}
           </p>
 
           {expanded && (
             <div className="mt-3 pt-3 border-t">
               <div className="prose prose-sm max-w-none dark:prose-invert">
                 <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
-                  {email.content}
+                  {item.content}
                 </pre>
               </div>
             </div>
@@ -111,12 +109,12 @@ function EmailCard({ email }: { email: Email }) {
   );
 }
 
-export function ListUI({ emails }: { emails: Email[] }) {
-  if (emails.length === 0) {
+export function ListUI({ items }: { items: ListItem[] }) {
+  if (items.length === 0) {
     return (
       <div className="text-center py-12">
-        <MailIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-        <h3 className="text-lg font-semibold mb-2">No emails found</h3>
+        <FileIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+        <h3 className="text-lg font-semibold mb-2">No items found</h3>
         <p className="text-muted-foreground">Try adjusting your search query</p>
       </div>
     );
@@ -124,8 +122,8 @@ export function ListUI({ emails }: { emails: Email[] }) {
 
   return (
     <div className="space-y-3">
-      {emails.map((email) => (
-        <EmailCard key={email.id} email={email} />
+      {items.map((item) => (
+        <ListItemCard key={item.id} item={item} />
       ))}
     </div>
   );

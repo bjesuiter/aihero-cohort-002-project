@@ -83,7 +83,7 @@ export default async function SearchPage(props: {
                   )}
                 </p>
               </div>
-              <ListUI emails={paginatedVideos} />
+              <ListUI items={paginatedVideos} />
               {totalPages > 1 && (
                 <div className="mt-6">
                   <SearchPagination
