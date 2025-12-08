@@ -1,6 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import BM25 from "okapibm25";
+import { embedMany } from "ai";
+import { google } from "@ai-sdk/google";
 
 interface Video {
   id: string;
@@ -23,19 +25,25 @@ interface VideosData {
   videos: Video[];
 }
 
-export const searchWithBM25 = async (
-  keywords: string[],
-  videos: Video[],
-) => {
-  const corpus = videos.map((video) =>
-    `Title: ${video.title}
+/**
+ * Converts a video to its text representation for search/embedding purposes.
+ * Ensures consistent formatting across BM25 and embedding generation.
+ */
+function videoObjectToText(video: Video): string {
+  return `Title: ${video.title}
     Description: ${video.description}
     Channel Title: ${video.channelTitle}
     Published At: ${video.publishedAt}
     Tags: ${video.tags.join(", ")}
     Category: ${video.categoryName}
-  `
-  );
+  `;
+}
+
+export const searchWithBM25 = async (
+  keywords: string[],
+  videos: Video[],
+) => {
+  const corpus = videos.map(videoObjectToText);
 
   const scores: number[] = (BM25 as any)(
     corpus,
@@ -52,4 +60,93 @@ export async function loadVideos(): Promise<Video[]> {
   const fileContent = await fs.readFile(filePath, "utf-8");
   const data: VideosData = JSON.parse(fileContent);
   return data.videos;
+}
+
+/**
+ * The cache directory for the embeddings.
+ * The cache key is the model name.
+ * The cache file consists of the cache key and the video id.
+ * The content of the cache file is a JSON object with the video id and its embedding.
+ * The content of the JSON object is:
+ * {
+ *   "id": "video id",
+ *   "embedding": number[]
+ * }
+ */
+const CACHE_DIR = path.join(process.cwd(), "data", "embeddings");
+const CACHE_KEY = "google-text-embedding-004";
+
+/**
+ * @param id - The video id.
+ * @returns The path to the embedding file.
+ */
+const getEmbeddingFilePath = (id: string) =>
+  path.join(CACHE_DIR, `${CACHE_KEY}-${id}.json`);
+
+/**
+ * @param videos - The videos to load or generate embeddings for.
+ * @returns An array of objects with the video id and its embedding.
+ */
+export async function loadOrGenerateEmbeddings(
+  videos: Video[],
+): Promise<{ id: string; embedding: number[] }[]> {
+  // Ensure cache directory exists
+  await fs.mkdir(CACHE_DIR, { recursive: true });
+
+  const results: { id: string; embedding: number[] }[] = [];
+  const uncachedVideos: Video[] = [];
+
+  // Check cache for each video
+  for (const video of videos) {
+    try {
+      const cached = await fs.readFile(
+        getEmbeddingFilePath(video.id),
+        "utf-8",
+      );
+      const data = JSON.parse(cached);
+      results.push({ id: video.id, embedding: data.embedding });
+    } catch {
+      // Cache miss - need to generate
+      uncachedVideos.push(video);
+    }
+  }
+
+  // Generate embeddings for uncached videos in batches of 99
+  if (uncachedVideos.length > 0) {
+    console.log(
+      `Generating embeddings for ${uncachedVideos.length} videos`,
+    );
+    const BATCH_SIZE = 99;
+    for (let i = 0; i < uncachedVideos.length; i += BATCH_SIZE) {
+      const batch = uncachedVideos.slice(i, i + BATCH_SIZE);
+      console.log(
+        `Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${
+          Math.ceil(
+            uncachedVideos.length / BATCH_SIZE,
+          )
+        }`,
+      );
+
+      // Create text representation for each video (same format as BM25 corpus)
+      const texts = batch.map(videoObjectToText);
+
+      const { embeddings } = await embedMany({
+        model: google.textEmbeddingModel("text-embedding-004"),
+        values: texts,
+      });
+
+      // Write batch to cache
+      for (let j = 0; j < batch.length; j++) {
+        const video = batch[j];
+        const embedding = embeddings[j];
+        await fs.writeFile(
+          getEmbeddingFilePath(video.id),
+          JSON.stringify({ id: video.id, embedding }),
+        );
+        results.push({ id: video.id, embedding });
+      }
+    }
+  }
+
+  return results;
 }
