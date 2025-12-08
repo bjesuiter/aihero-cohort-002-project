@@ -2,8 +2,9 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MailIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import { MailIcon, ChevronDownIcon, ChevronUpIcon, ExternalLinkIcon } from "lucide-react";
 import { useState } from "react";
+import Link from "next/link";
 
 type Email = {
   id: string;
@@ -12,6 +13,7 @@ type Email = {
   preview: string;
   content: string;
   date: string;
+  url: string;
 };
 
 function EmailCard({ email }: { email: Email }) {
@@ -40,7 +42,18 @@ function EmailCard({ email }: { email: Email }) {
               <h3 className="font-semibold text-base mb-0.5">
                 {email.subject}
               </h3>
-              <p className="text-xs text-muted-foreground">{email.from}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-muted-foreground">{email.from}</p>
+                <Link
+                  href={email.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-primary hover:underline flex items-center gap-1"
+                >
+                  <ExternalLinkIcon className="h-3 w-3" />
+                  Watch
+                </Link>
+              </div>
             </div>
             <span className="text-xs text-muted-foreground whitespace-nowrap">
               {formatDate(email.date)}
