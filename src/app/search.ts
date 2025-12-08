@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import BM25 from "okapibm25";
-import { embedMany } from "ai";
+import { cosineSimilarity, embed, embedMany } from "ai";
 import { google } from "@ai-sdk/google";
 
 interface Video {
@@ -149,4 +149,36 @@ export async function loadOrGenerateEmbeddings(
   }
 
   return results;
+}
+
+export async function searchWithEmbeddings(
+  query: string,
+  videos: Video[],
+) {
+  // Should load the pre-cached embeddings for the videos
+  const embeddings = await loadOrGenerateEmbeddings(videos);
+
+  // generate query embedding
+  const { embedding: queryEmbedding } = await embed({
+    model: google.textEmbeddingModel("text-embedding-004"),
+    value: query,
+  });
+
+  const videosWithScores = embeddings.map(({ id: videoId, embedding }) => {
+    const video = videos.find((video) => video.id === videoId)!;
+    const score = cosineSimilarity(queryEmbedding, embedding);
+    return { score, video };
+  });
+
+  // Sort by score descending
+  const sortedVideosWithScores = videosWithScores.sort((a, b) =>
+    b.score - a.score
+  );
+
+  console.log(
+    `Sorted videos with embedding scores: ${sortedVideosWithScores.length}`,
+    sortedVideosWithScores,
+  );
+
+  return sortedVideosWithScores;
 }
