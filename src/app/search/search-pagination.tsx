@@ -28,7 +28,7 @@ export function SearchPagination({
     if (query) params.set("q", query);
     if (perPage !== 10) params.set("perPage", perPage.toString());
     params.set("page", page.toString());
-    if (searchType && searchType !== "semantic") {
+    if (searchType && searchType !== "rrf") {
       params.set("searchType", searchType);
     }
     return `/search?${params.toString()}`;

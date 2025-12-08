@@ -27,7 +27,7 @@ export function SearchInput({
     if (currentPerPage !== 10) {
       params.set("perPage", currentPerPage.toString());
     }
-    if (searchType && searchType !== "semantic") {
+    if (searchType && searchType !== "rrf") {
       params.set("searchType", searchType);
     }
     const queryString = params.toString();

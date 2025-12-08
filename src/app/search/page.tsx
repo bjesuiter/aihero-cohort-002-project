@@ -3,6 +3,7 @@ import {
   searchWithBM25,
   loadOrGenerateEmbeddings,
   searchWithEmbeddings,
+  searchWithRRF,
 } from "@/app/search";
 import { SideBar } from "@/components/side-bar";
 import { TopBar } from "@/components/top-bar";
@@ -26,7 +27,7 @@ export default async function SearchPage(props: {
   const query = searchParams.q || "";
   const page = Number(searchParams.page) || 1;
   const perPage = Number(searchParams.perPage) || 10;
-  const searchType = searchParams.searchType || "semantic"; // "bm25" or "semantic"
+  const searchType = searchParams.searchType || "rrf"; // "rrf", "bm25", or "semantic"
 
   // Load video data
   const allVideos = await loadVideos();
@@ -37,16 +38,20 @@ export default async function SearchPage(props: {
   const videosWithScores =
     searchType === "bm25"
       ? await searchWithBM25(query.toLowerCase().split(" "), allVideos)
-      : await searchWithEmbeddings(query, allVideos);
+      : searchType === "semantic"
+        ? await searchWithEmbeddings(query, allVideos)
+        : await searchWithRRF(query, allVideos);
 
   // Transform videos to match the expected format
   const transformedVideos = videosWithScores
     .map(({ score, video }) => {
-      const scores: { bm25?: number; semantic?: number } = {};
+      const scores: { bm25?: number; semantic?: number; rrf?: number } = {};
       if (searchType === "bm25") {
         scores.bm25 = score;
-      } else {
+      } else if (searchType === "semantic") {
         scores.semantic = score;
+      } else {
+        scores.rrf = score;
       }
       return {
         id: video.id,
@@ -63,17 +68,26 @@ export default async function SearchPage(props: {
     .sort((a, b) => {
       // Sort by the score type specified in searchType parameter
       const aScore =
-        (searchType === "bm25" ? a.scores.bm25 : a.scores.semantic) ?? 0;
+        searchType === "bm25"
+          ? a.scores.bm25 ?? 0
+          : searchType === "semantic"
+            ? a.scores.semantic ?? 0
+            : a.scores.rrf ?? 0;
       const bScore =
-        (searchType === "bm25" ? b.scores.bm25 : b.scores.semantic) ?? 0;
+        searchType === "bm25"
+          ? b.scores.bm25 ?? 0
+          : searchType === "semantic"
+            ? b.scores.semantic ?? 0
+            : b.scores.rrf ?? 0;
       return bScore - aScore;
     });
 
   const filteredVideos = transformedVideos.filter((video) => {
-    // Filter based on any score > 0.2
+    // Filter based on any score > 0.0
     return (
       (video.scores.bm25 !== undefined && video.scores.bm25 > 0.0) ||
-      (video.scores.semantic !== undefined && video.scores.semantic > 0.0)
+      (video.scores.semantic !== undefined && video.scores.semantic > 0.0) ||
+      (video.scores.rrf !== undefined && video.scores.rrf > 0.0)
     );
   });
 

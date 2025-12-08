@@ -26,7 +26,7 @@ export function PerPageSelector({
     params.set("perPage", value);
     // Reset to page 1 when changing per page
     params.set("page", "1");
-    if (searchType && searchType !== "semantic") {
+    if (searchType && searchType !== "rrf") {
       params.set("searchType", searchType);
     }
     router.push(`/search?${params.toString()}`);
