@@ -33,6 +33,7 @@ export default async function SearchPage(props: {
       content: video.description,
       date: video.publishedAt,
       url: `https://www.youtube.com/watch?v=${video.id}`,
+      thumbnail: video.thumbnails.default.url,
       score,
     }))
     .sort((a, b) => b.score - a.score);

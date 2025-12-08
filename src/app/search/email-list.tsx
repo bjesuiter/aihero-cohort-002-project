@@ -2,9 +2,15 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MailIcon, ChevronDownIcon, ChevronUpIcon, ExternalLinkIcon } from "lucide-react";
+import {
+  MailIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  ExternalLinkIcon,
+} from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 type Email = {
   id: string;
@@ -14,6 +20,7 @@ type Email = {
   content: string;
   date: string;
   url: string;
+  thumbnail: string;
 };
 
 function EmailCard({ email }: { email: Email }) {
@@ -33,8 +40,14 @@ function EmailCard({ email }: { email: Email }) {
   return (
     <Card className="p-4 hover:shadow-md transition-shadow">
       <div className="flex items-start gap-3">
-        <div className="mt-0.5 p-1.5 rounded-full bg-primary/10">
-          <MailIcon className="h-4 w-4 text-primary" />
+        <div className="mt-0.5 flex-shrink-0">
+          <Image
+            src={email.thumbnail}
+            alt={email.subject}
+            width={120}
+            height={90}
+            className="rounded"
+          />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-4 mb-1">

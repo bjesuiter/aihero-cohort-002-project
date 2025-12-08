@@ -10,6 +10,13 @@ interface Video {
   channelTitle: string;
   tags: string[];
   categoryName: string;
+  thumbnails: {
+    default: {
+      url: string;
+      width: number;
+      height: number;
+    };
+  };
 }
 
 interface VideosData {
