@@ -4,6 +4,9 @@ import BM25 from "okapibm25";
 import { cosineSimilarity, embed, embedMany } from "ai";
 import { google } from "@ai-sdk/google";
 
+// Types and Utilities
+// -----------------------
+
 interface Video {
   id: string;
   title: string;
@@ -39,6 +42,16 @@ function videoObjectToText(video: Video): string {
   `;
 }
 
+export async function loadVideos(): Promise<Video[]> {
+  const filePath = path.join(process.cwd(), "data", "videos.json");
+  const fileContent = await fs.readFile(filePath, "utf-8");
+  const data: VideosData = JSON.parse(fileContent);
+  return data.videos;
+}
+
+// Phase 1: BM25 Search
+// -----------------------
+
 export const searchWithBM25 = async (
   keywords: string[],
   videos: Video[],
@@ -55,12 +68,8 @@ export const searchWithBM25 = async (
     .sort((a, b) => b.score - a.score);
 };
 
-export async function loadVideos(): Promise<Video[]> {
-  const filePath = path.join(process.cwd(), "data", "videos.json");
-  const fileContent = await fs.readFile(filePath, "utf-8");
-  const data: VideosData = JSON.parse(fileContent);
-  return data.videos;
-}
+// Phase 2: Embedding Search
+// --------------------------
 
 /**
  * The cache directory for the embeddings.
@@ -182,3 +191,6 @@ export async function searchWithEmbeddings(
 
   return sortedVideosWithScores;
 }
+
+// Phase 3: Hybrid Search with Reciprocal Rank Fusion
+// --------------------------------------------------
