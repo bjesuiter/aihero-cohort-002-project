@@ -2,6 +2,7 @@ import {
   loadVideos,
   searchWithBM25,
   loadOrGenerateEmbeddings,
+  searchWithEmbeddings,
 } from "@/app/search";
 import { SideBar } from "@/components/side-bar";
 import { TopBar } from "@/components/top-bar";
@@ -25,10 +26,12 @@ export default async function SearchPage(props: {
   // Pre-cache the embeddings for the videos
   await loadOrGenerateEmbeddings(allVideos);
 
-  const videosWithScores = await searchWithBM25(
-    query.toLowerCase().split(" "),
-    allVideos
-  );
+  // const videosWithScores = await searchWithBM25(
+  //   query.toLowerCase().split(" "),
+  //   allVideos
+  // );
+
+  const videosWithScores = await searchWithEmbeddings(query, allVideos);
 
   // Transform videos to match the expected format
   const transformedVideos = videosWithScores
@@ -45,7 +48,7 @@ export default async function SearchPage(props: {
     }))
     .sort((a, b) => b.score - a.score);
 
-  const filteredVideos = transformedVideos.filter((video) => video.score > 0.0);
+  const filteredVideos = transformedVideos.filter((video) => video.score > 0.2);
 
   const totalPages = Math.ceil(filteredVideos.length / perPage);
   const startIndex = (page - 1) * perPage;
