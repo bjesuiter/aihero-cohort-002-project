@@ -28,6 +28,7 @@
         "nanoid": "^5.1.6",
         "next": "15.5.4",
         "next-themes": "^0.4.6",
+        "okapibm25": "^1.4.1",
         "react": "19.1.0",
         "react-dom": "19.1.0",
         "react-syntax-highlighter": "^15.6.6",
@@ -1119,6 +1120,8 @@
     "node-abi": ["node-abi@3.85.0", "", { "dependencies": { "semver": "7.7.3" } }, "sha512-zsFhmbkAzwhTft6nd3VxcG0cvJsT70rL+BIGHWVq5fi6MwGrHwzqKaxXE+Hl2GmnGItnDKPPkO5/LQqjVkIdFg=="],
 
     "obug": ["obug@2.1.1", "", {}, "sha512-uTqF9MuPraAQ+IsnPf366RG4cP9RtUi7MLO1N3KEc+wb0a6yKpeL0lmk2IB1jY5KHPAlTc6T/JRdC/YqxHNwkQ=="],
+
+    "okapibm25": ["okapibm25@1.4.1", "", {}, "sha512-UHmeH4MAtZXGFVncwbY7pfFvDVNxpsyM3W66aGPU0SHj1+ld59ty+9lJ0ifcrcnPUl1XdYoDgb06ObyCnpTs3g=="],
 
     "on-exit-leak-free": ["on-exit-leak-free@2.1.2", "", {}, "sha512-0eJJY6hXLGf1udHwfNftBqH+g73EU4B504nZeKpz1sYRKafAghwxEJunB2O7rDZkL4PGfsMVnTXZ2EjibbqcsA=="],
 

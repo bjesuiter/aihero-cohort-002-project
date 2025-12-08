@@ -1,31 +1,12 @@
+import { loadVideos } from "@/app/search";
+import { SideBar } from "@/components/side-bar";
 import { TopBar } from "@/components/top-bar";
-import { SearchInput } from "./search-input";
-import { EmailList } from "./email-list";
-import { SearchPagination } from "./search-pagination";
-import { PerPageSelector } from "./per-page-selector";
-import fs from "fs/promises";
-import path from "path";
 import { loadChats, loadMemories } from "@/lib/persistence-layer";
 import { CHAT_LIMIT } from "../page";
-import { SideBar } from "@/components/side-bar";
-
-interface Video {
-  id: string;
-  title: string;
-  description: string;
-  url: string;
-}
-
-interface VideosData {
-  videos: Video[];
-}
-
-async function loadVideos(): Promise<Video[]> {
-  const filePath = path.join(process.cwd(), "data", "videos.json");
-  const fileContent = await fs.readFile(filePath, "utf-8");
-  const data: VideosData = JSON.parse(fileContent);
-  return data.videos;
-}
+import { EmailList } from "./email-list";
+import { PerPageSelector } from "./per-page-selector";
+import { SearchInput } from "./search-input";
+import { SearchPagination } from "./search-pagination";
 
 export default async function SearchPage(props: {
   searchParams: Promise<{ q?: string; page?: string; perPage?: string }>;
