@@ -9,6 +9,7 @@ import {
   ExternalLinkIcon,
   BrainIcon,
   SearchIcon,
+  Sparkles,
 } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
@@ -17,6 +18,7 @@ import Image from "next/image";
 type Scores = {
   bm25?: number;
   semantic?: number;
+  rrf?: number;
 };
 
 type ListItem = {
@@ -45,9 +47,12 @@ function ListItemCard({ item }: { item: ListItem }) {
     }).format(date);
   };
 
-  const formatScore = (score: number, scoreType: "bm25" | "semantic") => {
-    if (scoreType === "semantic") {
-      return score.toFixed(4);
+  const formatScore = (
+    score: number,
+    scoreType: "bm25" | "semantic" | "rrf"
+  ) => {
+    if (scoreType === "semantic" || scoreType === "rrf") {
+      return `${(score * 100).toFixed(2)}%`;
     }
     return score.toFixed(2);
   };
@@ -97,6 +102,12 @@ function ListItemCard({ item }: { item: ListItem }) {
                     <span className="text-xs font-mono text-muted-foreground flex items-center gap-1">
                       <BrainIcon className="h-3 w-3 text-pink-500" />
                       Semantic: {formatScore(item.scores.semantic, "semantic")}
+                    </span>
+                  )}
+                  {item.scores.rrf !== undefined && (
+                    <span className="text-xs font-mono text-muted-foreground flex items-center gap-1">
+                      <Sparkles className="h-3 w-3 text-yellow-500" />
+                      RRF: {formatScore(item.scores.rrf, "rrf")}
                     </span>
                   )}
                 </div>
