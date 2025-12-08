@@ -15,17 +15,22 @@ export function SearchPagination({
   totalPages,
   query,
   perPage,
+  searchType,
 }: {
   currentPage: number;
   totalPages: number;
   query: string;
   perPage: number;
+  searchType: string;
 }) {
   const buildUrl = (page: number) => {
     const params = new URLSearchParams();
     if (query) params.set("q", query);
     if (perPage !== 10) params.set("perPage", perPage.toString());
     params.set("page", page.toString());
+    if (searchType && searchType !== "semantic") {
+      params.set("searchType", searchType);
+    }
     return `/search?${params.toString()}`;
   };
 

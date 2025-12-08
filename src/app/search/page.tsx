@@ -12,6 +12,7 @@ import { ListUI } from "./list-ui";
 import { PerPageSelector } from "./per-page-selector";
 import { SearchInput } from "./search-input";
 import { SearchPagination } from "./search-pagination";
+import { SearchTypeSelector } from "./search-type-selector";
 
 export default async function SearchPage(props: {
   searchParams: Promise<{
@@ -40,22 +41,41 @@ export default async function SearchPage(props: {
 
   // Transform videos to match the expected format
   const transformedVideos = videosWithScores
-    .map(({ score, video }) => ({
-      id: video.id,
-      from: video.channelTitle,
-      subject: video.title,
-      preview: video.description.substring(0, 100) + "...",
-      content: video.description,
-      date: video.publishedAt,
-      url: `https://www.youtube.com/watch?v=${video.id}`,
-      thumbnail: video.thumbnails.default.url,
-      score,
-      scoreType:
-        searchType === "bm25" ? ("bm25" as const) : ("semantic" as const),
-    }))
-    .sort((a, b) => b.score - a.score);
+    .map(({ score, video }) => {
+      const scores: { bm25?: number; semantic?: number } = {};
+      if (searchType === "bm25") {
+        scores.bm25 = score;
+      } else {
+        scores.semantic = score;
+      }
+      return {
+        id: video.id,
+        from: video.channelTitle,
+        subject: video.title,
+        preview: video.description.substring(0, 100) + "...",
+        content: video.description,
+        date: video.publishedAt,
+        url: `https://www.youtube.com/watch?v=${video.id}`,
+        thumbnail: video.thumbnails.default.url,
+        scores,
+      };
+    })
+    .sort((a, b) => {
+      // Sort by the score type specified in searchType parameter
+      const aScore =
+        (searchType === "bm25" ? a.scores.bm25 : a.scores.semantic) ?? 0;
+      const bScore =
+        (searchType === "bm25" ? b.scores.bm25 : b.scores.semantic) ?? 0;
+      return bScore - aScore;
+    });
 
-  const filteredVideos = transformedVideos.filter((video) => video.score > 0.2);
+  const filteredVideos = transformedVideos.filter((video) => {
+    // Filter based on any score > 0.2
+    return (
+      (video.scores.bm25 !== undefined && video.scores.bm25 > 0.0) ||
+      (video.scores.semantic !== undefined && video.scores.semantic > 0.0)
+    );
+  });
 
   const totalPages = Math.ceil(filteredVideos.length / perPage);
   const startIndex = (page - 1) * perPage;
@@ -81,8 +101,23 @@ export default async function SearchPage(props: {
             </div>
 
             <div className="flex md:items-center md:justify-between gap-4 flex-col md:flex-row">
-              <SearchInput initialQuery={query} currentPerPage={perPage} />
-              <PerPageSelector currentPerPage={perPage} query={query} />
+              <SearchInput
+                initialQuery={query}
+                currentPerPage={perPage}
+                searchType={searchType}
+              />
+              <div className="flex items-center gap-4">
+                <SearchTypeSelector
+                  currentSearchType={searchType}
+                  query={query}
+                  perPage={perPage}
+                />
+                <PerPageSelector
+                  currentPerPage={perPage}
+                  query={query}
+                  searchType={searchType}
+                />
+              </div>
             </div>
 
             <div className="mt-6">
@@ -108,6 +143,7 @@ export default async function SearchPage(props: {
                     totalPages={totalPages}
                     query={query}
                     perPage={perPage}
+                    searchType={searchType}
                   />
                 </div>
               )}

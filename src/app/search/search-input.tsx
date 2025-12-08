@@ -9,9 +9,11 @@ import { useState, FormEvent } from "react";
 export function SearchInput({
   initialQuery,
   currentPerPage,
+  searchType,
 }: {
   initialQuery: string;
   currentPerPage: number;
+  searchType: string;
 }) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
@@ -24,6 +26,9 @@ export function SearchInput({
     }
     if (currentPerPage !== 10) {
       params.set("perPage", currentPerPage.toString());
+    }
+    if (searchType && searchType !== "semantic") {
+      params.set("searchType", searchType);
     }
     const queryString = params.toString();
     router.push(queryString ? `/search?${queryString}` : "/search");

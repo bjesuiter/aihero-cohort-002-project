@@ -12,6 +12,11 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
+type Scores = {
+  bm25?: number;
+  semantic?: number;
+};
+
 type ListItem = {
   id: string;
   from: string;
@@ -21,8 +26,7 @@ type ListItem = {
   date: string;
   url: string;
   thumbnail: string;
-  score?: number;
-  scoreType?: "bm25" | "semantic";
+  scores?: Scores;
 };
 
 function ListItemCard({ item }: { item: ListItem }) {
@@ -39,7 +43,7 @@ function ListItemCard({ item }: { item: ListItem }) {
     }).format(date);
   };
 
-  const formatScore = (score: number, scoreType?: "bm25" | "semantic") => {
+  const formatScore = (score: number, scoreType: "bm25" | "semantic") => {
     if (scoreType === "semantic") {
       return score.toFixed(4);
     }
@@ -79,11 +83,19 @@ function ListItemCard({ item }: { item: ListItem }) {
               <span className="text-xs text-muted-foreground whitespace-nowrap">
                 {formatDate(item.date)}
               </span>
-              {item.score !== undefined && (
-                <span className="text-xs font-mono text-muted-foreground">
-                  {item.scoreType === "bm25" ? "BM25" : "Semantic"}:{" "}
-                  {formatScore(item.score, item.scoreType)}
-                </span>
+              {item.scores && (
+                <div className="flex flex-col items-end gap-0.5">
+                  {item.scores.bm25 !== undefined && (
+                    <span className="text-xs font-mono text-muted-foreground">
+                      BM25: {formatScore(item.scores.bm25, "bm25")}
+                    </span>
+                  )}
+                  {item.scores.semantic !== undefined && (
+                    <span className="text-xs font-mono text-muted-foreground">
+                      Semantic: {formatScore(item.scores.semantic, "semantic")}
+                    </span>
+                  )}
+                </div>
               )}
             </div>
           </div>
