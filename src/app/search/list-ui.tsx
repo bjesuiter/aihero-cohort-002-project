@@ -7,6 +7,8 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
   ExternalLinkIcon,
+  BrainIcon,
+  SearchIcon,
 } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
@@ -86,12 +88,14 @@ function ListItemCard({ item }: { item: ListItem }) {
               {item.scores && (
                 <div className="flex flex-col items-end gap-0.5">
                   {item.scores.bm25 !== undefined && (
-                    <span className="text-xs font-mono text-muted-foreground">
+                    <span className="text-xs font-mono text-muted-foreground flex items-center gap-1">
+                      <SearchIcon className="h-3 w-3 text-blue-500" />
                       BM25: {formatScore(item.scores.bm25, "bm25")}
                     </span>
                   )}
                   {item.scores.semantic !== undefined && (
-                    <span className="text-xs font-mono text-muted-foreground">
+                    <span className="text-xs font-mono text-muted-foreground flex items-center gap-1">
+                      <BrainIcon className="h-3 w-3 text-pink-500" />
                       Semantic: {formatScore(item.scores.semantic, "semantic")}
                     </span>
                   )}

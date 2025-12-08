@@ -8,6 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
+import { BrainIcon, SearchIcon } from "lucide-react";
 
 export function SearchTypeSelector({
   currentSearchType,
@@ -36,12 +37,23 @@ export function SearchTypeSelector({
     <div className="flex items-center gap-2">
       <span className="text-sm text-muted-foreground">Search type</span>
       <Select value={currentSearchType} onValueChange={handleChange}>
-        <SelectTrigger className="w-[120px] h-8">
+        <SelectTrigger className="w-[140px] h-8">
+          {currentSearchType === "semantic" ? (
+            <BrainIcon className="h-3.5 w-3.5 mr-1.5 text-pink-500" />
+          ) : (
+            <SearchIcon className="h-3.5 w-3.5 mr-1.5 text-blue-500" />
+          )}
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="semantic">Semantic</SelectItem>
-          <SelectItem value="bm25">BM25</SelectItem>
+          <SelectItem value="semantic">
+            <BrainIcon className="h-4 w-4 text-pink-500" />
+            <span>Semantic</span>
+          </SelectItem>
+          <SelectItem value="bm25">
+            <SearchIcon className="h-4 w-4 text-blue-500" />
+            <span>BM25</span>
+          </SelectItem>
         </SelectContent>
       </Select>
     </div>
