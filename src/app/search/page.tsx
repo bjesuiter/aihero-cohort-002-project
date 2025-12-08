@@ -18,16 +18,6 @@ export default async function SearchPage(props: {
 
   const allVideos = await loadVideos();
 
-  // Extract domain from URL for "from" field
-  const getDomainFromUrl = (url: string): string => {
-    try {
-      const urlObj = new URL(url);
-      return urlObj.hostname.replace("www.", "");
-    } catch {
-      return "Unknown";
-    }
-  };
-
   const videosWithScores = await searchWithBM25(
     query.toLowerCase().split(" "),
     allVideos
@@ -37,11 +27,11 @@ export default async function SearchPage(props: {
   const transformedVideos = videosWithScores
     .map(({ score, video }) => ({
       id: video.id,
-      from: getDomainFromUrl(video.url),
+      from: video.channelTitle,
       subject: video.title,
       preview: video.description.substring(0, 100) + "...",
       content: video.description,
-      date: new Date().toISOString(), // Videos don't have timestamps, using current date
+      date: video.publishedAt,
       score,
     }))
     .sort((a, b) => b.score - a.score);

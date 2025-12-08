@@ -6,7 +6,10 @@ interface Video {
   id: string;
   title: string;
   description: string;
-  url: string;
+  publishedAt: string;
+  channelTitle: string;
+  tags: string[];
+  categoryName: string;
 }
 
 interface VideosData {
@@ -18,7 +21,13 @@ export const searchWithBM25 = async (
   videos: Video[],
 ) => {
   const corpus = videos.map((video) =>
-    `${video.title} \n ${video.description}`
+    `Title: ${video.title}
+    Description: ${video.description}
+    Channel Title: ${video.channelTitle}
+    Published At: ${video.publishedAt}
+    Tags: ${video.tags.join(", ")}
+    Category: ${video.categoryName}
+  `
   );
 
   const scores: number[] = (BM25 as any)(
