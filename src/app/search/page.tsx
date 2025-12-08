@@ -3,7 +3,7 @@ import { SideBar } from "@/components/side-bar";
 import { TopBar } from "@/components/top-bar";
 import { loadChats, loadMemories } from "@/lib/persistence-layer";
 import { CHAT_LIMIT } from "../page";
-import { EmailList } from "./email-list";
+import { ListUI } from "./list-ui";
 import { PerPageSelector } from "./per-page-selector";
 import { SearchInput } from "./search-input";
 import { SearchPagination } from "./search-pagination";
@@ -83,7 +83,7 @@ export default async function SearchPage(props: {
                   )}
                 </p>
               </div>
-              <EmailList emails={paginatedVideos} />
+              <ListUI emails={paginatedVideos} />
               {totalPages > 1 && (
                 <div className="mt-6">
                   <SearchPagination

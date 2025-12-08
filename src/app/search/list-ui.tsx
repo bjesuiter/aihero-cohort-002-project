@@ -111,7 +111,7 @@ function EmailCard({ email }: { email: Email }) {
   );
 }
 
-export function EmailList({ emails }: { emails: Email[] }) {
+export function ListUI({ emails }: { emails: Email[] }) {
   if (emails.length === 0) {
     return (
       <div className="text-center py-12">
