@@ -195,8 +195,10 @@ export async function searchWithEmbeddings(
 // Phase 3: Hybrid Search with Reciprocal Rank Fusion
 // --------------------------------------------------
 // src/app/search.ts
-// ADDED: RRF parameter for rank fusion
-// The lower the K, the stricter the search- (TODO: figure out what tha means exactly)
+// The RRF_K parameter
+// Lower K (e.g., 10): steeper drop-off, top positions matter more.
+// Higher K (e.g., 60): gentler drop-off, more positions contribute.
+// In your code, RRF_K = 60 gives a balanced weighting across positions.
 const RRF_K = 60;
 
 // ADDED: Combines multiple ranking lists using position-based scoring
