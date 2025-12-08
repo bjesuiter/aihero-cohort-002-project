@@ -9,26 +9,22 @@ import { loadChats, loadMemories } from "@/lib/persistence-layer";
 import { CHAT_LIMIT } from "../page";
 import { SideBar } from "@/components/side-bar";
 
-interface Email {
+interface Video {
   id: string;
-  threadId: string;
-  from: string;
-  to: string | string[];
-  cc?: string[];
-  subject: string;
-  body: string;
-  timestamp: string;
-  inReplyTo?: string;
-  references?: string[];
-  labels?: string[];
-  arcId?: string;
-  phaseId?: number;
+  title: string;
+  description: string;
+  url: string;
 }
 
-async function loadEmails(): Promise<Email[]> {
-  const filePath = path.join(process.cwd(), "data", "emails.json");
+interface VideosData {
+  videos: Video[];
+}
+
+async function loadVideos(): Promise<Video[]> {
+  const filePath = path.join(process.cwd(), "data", "videos.json");
   const fileContent = await fs.readFile(filePath, "utf-8");
-  return JSON.parse(fileContent);
+  const data: VideosData = JSON.parse(fileContent);
+  return data.videos;
 }
 
 export default async function SearchPage(props: {
@@ -39,33 +35,41 @@ export default async function SearchPage(props: {
   const page = Number(searchParams.page) || 1;
   const perPage = Number(searchParams.perPage) || 10;
 
-  const allEmails = await loadEmails();
+  const allVideos = await loadVideos();
 
-  // Transform emails to match the expected format
-  const transformedEmails = allEmails
-    .map((email) => ({
-      id: email.id,
-      from: email.from,
-      subject: email.subject,
-      preview: email.body.substring(0, 100) + "...",
-      content: email.body,
-      date: email.timestamp,
-    }))
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  // Extract domain from URL for "from" field
+  const getDomainFromUrl = (url: string): string => {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.hostname.replace("www.", "");
+    } catch {
+      return "Unknown";
+    }
+  };
 
-  // Filter emails based on search query
-  const filteredEmails = query
-    ? transformedEmails.filter(
-        (email) =>
-          email.subject.toLowerCase().includes(query.toLowerCase()) ||
-          email.from.toLowerCase().includes(query.toLowerCase()) ||
-          email.content.toLowerCase().includes(query.toLowerCase())
+  // Transform videos to match the expected format
+  const transformedVideos = allVideos.map((video) => ({
+    id: video.id,
+    from: getDomainFromUrl(video.url),
+    subject: video.title,
+    preview: video.description.substring(0, 100) + "...",
+    content: video.description,
+    date: new Date().toISOString(), // Videos don't have timestamps, using current date
+  }));
+
+  // Filter videos based on search query
+  const filteredVideos = query
+    ? transformedVideos.filter(
+        (video) =>
+          video.subject.toLowerCase().includes(query.toLowerCase()) ||
+          video.from.toLowerCase().includes(query.toLowerCase()) ||
+          video.content.toLowerCase().includes(query.toLowerCase())
       )
-    : transformedEmails;
+    : transformedVideos;
 
-  const totalPages = Math.ceil(filteredEmails.length / perPage);
+  const totalPages = Math.ceil(filteredVideos.length / perPage);
   const startIndex = (page - 1) * perPage;
-  const paginatedEmails = filteredEmails.slice(
+  const paginatedVideos = filteredVideos.slice(
     startIndex,
     startIndex + perPage
   );
@@ -82,7 +86,7 @@ export default async function SearchPage(props: {
           <div className="max-w-4xl mx-auto xl:px-2 px-6 py-6">
             <div className="mb-6">
               <p className="text-sm text-muted-foreground">
-                Search through your email archive
+                Search through your video archive
               </p>
             </div>
 
@@ -96,17 +100,17 @@ export default async function SearchPage(props: {
                 <p className="text-sm text-muted-foreground">
                   {query ? (
                     <>
-                      Found {filteredEmails.length} result
-                      {filteredEmails.length !== 1 ? "s" : ""} for &ldquo;
+                      Found {filteredVideos.length} result
+                      {filteredVideos.length !== 1 ? "s" : ""} for &ldquo;
                       {query}
                       &rdquo;
                     </>
                   ) : (
-                    <>Found {filteredEmails.length} emails</>
+                    <>Found {filteredVideos.length} videos</>
                   )}
                 </p>
               </div>
-              <EmailList emails={paginatedEmails} />
+              <EmailList emails={paginatedVideos} />
               {totalPages > 1 && (
                 <div className="mt-6">
                   <SearchPagination
