@@ -20,9 +20,10 @@ export default async function SearchPage(props: {
   const page = Number(searchParams.page) || 1;
   const perPage = Number(searchParams.perPage) || 10;
 
-  // Load necessary data
+  // Load video data
   const allVideos = await loadVideos();
-  const embeddings = await loadOrGenerateEmbeddings(allVideos);
+  // Pre-cache the embeddings for the videos
+  await loadOrGenerateEmbeddings(allVideos);
 
   const videosWithScores = await searchWithBM25(
     query.toLowerCase().split(" "),
