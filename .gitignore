@@ -41,5 +41,6 @@ yarn-error.log*
 next-env.d.ts
 
 db.local.json
-data
+data/*
 !data/emails.json
+!data/videos.json
