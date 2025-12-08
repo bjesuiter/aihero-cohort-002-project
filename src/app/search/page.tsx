@@ -14,24 +14,29 @@ import { SearchInput } from "./search-input";
 import { SearchPagination } from "./search-pagination";
 
 export default async function SearchPage(props: {
-  searchParams: Promise<{ q?: string; page?: string; perPage?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    page?: string;
+    perPage?: string;
+    searchType?: string;
+  }>;
 }) {
   const searchParams = await props.searchParams;
   const query = searchParams.q || "";
   const page = Number(searchParams.page) || 1;
   const perPage = Number(searchParams.perPage) || 10;
+  const searchType = searchParams.searchType || "semantic"; // "bm25" or "semantic"
 
   // Load video data
   const allVideos = await loadVideos();
   // Pre-cache the embeddings for the videos
   await loadOrGenerateEmbeddings(allVideos);
 
-  // const videosWithScores = await searchWithBM25(
-  //   query.toLowerCase().split(" "),
-  //   allVideos
-  // );
-
-  const videosWithScores = await searchWithEmbeddings(query, allVideos);
+  // Perform search based on searchType
+  const videosWithScores =
+    searchType === "bm25"
+      ? await searchWithBM25(query.toLowerCase().split(" "), allVideos)
+      : await searchWithEmbeddings(query, allVideos);
 
   // Transform videos to match the expected format
   const transformedVideos = videosWithScores
@@ -45,6 +50,8 @@ export default async function SearchPage(props: {
       url: `https://www.youtube.com/watch?v=${video.id}`,
       thumbnail: video.thumbnails.default.url,
       score,
+      scoreType:
+        searchType === "bm25" ? ("bm25" as const) : ("semantic" as const),
     }))
     .sort((a, b) => b.score - a.score);
 

@@ -21,6 +21,8 @@ type ListItem = {
   date: string;
   url: string;
   thumbnail: string;
+  score?: number;
+  scoreType?: "bm25" | "semantic";
 };
 
 function ListItemCard({ item }: { item: ListItem }) {
@@ -35,6 +37,13 @@ function ListItemCard({ item }: { item: ListItem }) {
       hour: "numeric",
       minute: "2-digit",
     }).format(date);
+  };
+
+  const formatScore = (score: number, scoreType?: "bm25" | "semantic") => {
+    if (scoreType === "semantic") {
+      return score.toFixed(4);
+    }
+    return score.toFixed(2);
   };
 
   return (
@@ -66,9 +75,17 @@ function ListItemCard({ item }: { item: ListItem }) {
                 </Link>
               </div>
             </div>
-            <span className="text-xs text-muted-foreground whitespace-nowrap">
-              {formatDate(item.date)}
-            </span>
+            <div className="flex flex-col items-end gap-1">
+              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                {formatDate(item.date)}
+              </span>
+              {item.score !== undefined && (
+                <span className="text-xs font-mono text-muted-foreground">
+                  {item.scoreType === "bm25" ? "BM25" : "Semantic"}:{" "}
+                  {formatScore(item.score, item.scoreType)}
+                </span>
+              )}
+            </div>
           </div>
 
           <p className="text-sm text-foreground/80 mt-2 line-clamp-2">
