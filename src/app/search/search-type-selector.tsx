@@ -38,21 +38,29 @@ export function SearchTypeSelector({
       <span className="text-sm text-muted-foreground">Search type</span>
       <Select value={currentSearchType} onValueChange={handleChange}>
         <SelectTrigger className="w-[140px] h-8">
-          {currentSearchType === "semantic" ? (
-            <BrainIcon className="h-3.5 w-3.5 mr-1.5 text-pink-500" />
-          ) : (
-            <SearchIcon className="h-3.5 w-3.5 mr-1.5 text-blue-500" />
-          )}
-          <SelectValue />
+          <div className="flex items-center gap-1.5">
+            {currentSearchType === "semantic" ? (
+              <BrainIcon className="h-3.5 w-3.5 text-pink-500 shrink-0" />
+            ) : (
+              <SearchIcon className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+            )}
+            <SelectValue>
+              {currentSearchType === "semantic" ? "Semantic" : "BM25"}
+            </SelectValue>
+          </div>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="semantic">
-            <BrainIcon className="h-4 w-4 text-pink-500" />
-            <span>Semantic</span>
+            <div className="flex items-center gap-2">
+              <BrainIcon className="h-4 w-4 text-pink-500" />
+              <span>Semantic</span>
+            </div>
           </SelectItem>
           <SelectItem value="bm25">
-            <SearchIcon className="h-4 w-4 text-blue-500" />
-            <span>BM25</span>
+            <div className="flex items-center gap-2">
+              <SearchIcon className="h-4 w-4 text-blue-500" />
+              <span>BM25</span>
+            </div>
           </SelectItem>
         </SelectContent>
       </Select>
