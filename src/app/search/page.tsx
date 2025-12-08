@@ -1,4 +1,4 @@
-import { loadVideos } from "@/app/search";
+import { loadVideos, searchWithBM25 } from "@/app/search";
 import { SideBar } from "@/components/side-bar";
 import { TopBar } from "@/components/top-bar";
 import { loadChats, loadMemories } from "@/lib/persistence-layer";
@@ -28,25 +28,25 @@ export default async function SearchPage(props: {
     }
   };
 
-  // Transform videos to match the expected format
-  const transformedVideos = allVideos.map((video) => ({
-    id: video.id,
-    from: getDomainFromUrl(video.url),
-    subject: video.title,
-    preview: video.description.substring(0, 100) + "...",
-    content: video.description,
-    date: new Date().toISOString(), // Videos don't have timestamps, using current date
-  }));
+  const videosWithScores = await searchWithBM25(
+    query.toLowerCase().split(" "),
+    allVideos
+  );
 
-  // Filter videos based on search query
-  const filteredVideos = query
-    ? transformedVideos.filter(
-        (video) =>
-          video.subject.toLowerCase().includes(query.toLowerCase()) ||
-          video.from.toLowerCase().includes(query.toLowerCase()) ||
-          video.content.toLowerCase().includes(query.toLowerCase())
-      )
-    : transformedVideos;
+  // Transform videos to match the expected format
+  const transformedVideos = videosWithScores
+    .map(({ score, video }) => ({
+      id: video.id,
+      from: getDomainFromUrl(video.url),
+      subject: video.title,
+      preview: video.description.substring(0, 100) + "...",
+      content: video.description,
+      date: new Date().toISOString(), // Videos don't have timestamps, using current date
+      score,
+    }))
+    .sort((a, b) => b.score - a.score);
+
+  const filteredVideos = transformedVideos.filter((video) => video.score > 0.0);
 
   const totalPages = Math.ceil(filteredVideos.length / perPage);
   const startIndex = (page - 1) * perPage;
