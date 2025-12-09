@@ -209,11 +209,6 @@ export async function searchWithEmbeddings(
     video.scores.semantic !== undefined && video.scores.semantic > 0.0
   );
 
-  console.log(
-    `Sorted videos with embedding scores: ${sortedVideosWithScores.length}`,
-    sortedVideosWithScores,
-  );
-
   return sortedVideosWithScores;
 }
 
