@@ -255,6 +255,10 @@ export function reciprocalRankFusion(
       const currentRrfScore = rrfScores.get(item.video.id) || 0;
 
       // Position-based scoring: 1/(k+rank)
+      // Question: must the rank start with 1 or is the index (zero-based) correct?
+      // Answer: I think the "1" is just math starting point. In general: smaller numbers are heavier than larger ones in the equasion.
+      // Its only important not to have K + RANK to equal zero.
+      // But because we know K is 60 we are safe to start with zero (in theory, can even start with -59)
       const rank = index + 1;
       const contribution = 1 / (RRF_K + rank);
       rrfScores.set(item.video.id, currentRrfScore + contribution);
