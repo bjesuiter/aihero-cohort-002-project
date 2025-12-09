@@ -80,7 +80,10 @@ export const searchWithBM25 = async (
       video: videos[idx],
       scores: { bm25: score },
     }))
-    .sort((a, b) => (b.scores.bm25 ?? 0) - (a.scores.bm25 ?? 0));
+    .sort((a, b) => (b.scores.bm25 ?? 0) - (a.scores.bm25 ?? 0))
+    .filter((video) =>
+      video.scores.bm25 !== undefined && video.scores.bm25 > 0.0
+    );
 };
 
 // Phase 2: Embedding Search
@@ -199,9 +202,11 @@ export async function searchWithEmbeddings(
     },
   );
 
-  // Sort by score descending
+  // Sort descending and filter by score
   const sortedVideosWithScores = videosWithScores.sort((a, b) =>
     (b.scores.semantic ?? 0) - (a.scores.semantic ?? 0)
+  ).filter((video) =>
+    video.scores.semantic !== undefined && video.scores.semantic > 0.0
   );
 
   console.log(
@@ -220,6 +225,8 @@ export async function searchWithEmbeddings(
 // Higher K (e.g., 60): gentler drop-off, more positions contribute.
 // In your code, RRF_K = 60 gives a balanced weighting across positions.
 const RRF_K = 60;
+const BM25_THRESHOLD = 0;
+const SEMANTIC_THRESHOLD = 0;
 
 // Combines multiple ranking lists using position-based scoring
 // Preserves underlying scores from each ranking (bm25, semantic) alongside the RRF score
@@ -232,10 +239,28 @@ export function reciprocalRankFusion(
 
   // Process each ranking list (BM25 and embeddings)
   rankings.forEach((ranking) => {
-    ranking.forEach((item, rank) => {
+    // Process each item in the ranking
+    ranking.forEach((item, index) => {
+      // Skip items with zero/irrelevant scores
+      // They shouldn't contribute to the fusion
+      const bm25Score = item.scores.bm25;
+      const semanticScore = item.scores.semantic;
+
+      // If this ranking has a BM25 score and it's at threshold, skip
+      // NOTE: This works, because items sorted by Semantic have a bm25 score of undefined, so this check does not apply
+      if (bm25Score !== undefined && bm25Score <= BM25_THRESHOLD) {
+        return;
+      }
+      // If this ranking has a semantic score and it's at threshold, skip
+      if (semanticScore !== undefined && semanticScore <= SEMANTIC_THRESHOLD) {
+        return;
+      }
+
+      // Get the current RRF score for the video
       const currentRrfScore = rrfScores.get(item.video.id) || 0;
 
       // Position-based scoring: 1/(k+rank)
+      const rank = index + 1;
       const contribution = 1 / (RRF_K + rank);
       rrfScores.set(item.video.id, currentRrfScore + contribution);
 
