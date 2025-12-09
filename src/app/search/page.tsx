@@ -69,12 +69,21 @@ export default async function SearchPage(props: {
   }));
 
   const filteredVideos = transformedVideos.filter((video) => {
-    // Filter based on any score > 0.0
-    return (
-      (video.scores.bm25 !== undefined && video.scores.bm25 > 0.0) ||
-      (video.scores.semantic !== undefined && video.scores.semantic > 0.0) ||
-      (video.scores.rrf !== undefined && video.scores.rrf > 0.0)
-    );
+    // Filter based on searchType
+    if (searchType === "bm25") {
+      // No need to limit this more than 0.0 right now, since bm25 is deterministic and if a search term does not exist, the score is 0.0
+      return video.scores.bm25 !== undefined && video.scores.bm25 > 0.0;
+    } else if (searchType === "semantic") {
+      // in ui, i multiply semantic score by 100 to get a percentage
+      // Only show videos with semantic score bigger than 45%^
+      return (
+        video.scores.semantic !== undefined && video.scores.semantic > 0.45
+      );
+    } else {
+      // in ui, i multiply rrf score by 100 to get a percentage
+      // Only show videos with rrf score bigger than 1 Percent
+      return video.scores.rrf !== undefined && video.scores.rrf > 0.01;
+    }
   });
 
   const totalPages = Math.ceil(filteredVideos.length / perPage);
