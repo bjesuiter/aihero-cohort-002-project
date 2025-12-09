@@ -29,6 +29,11 @@ export const searchTool = tool({
     execute: async ({ keywords, query }) => {
         const videos = await loadVideos();
 
+        // TODO: we need some query rewriting & search improvements to produce better results.
+        // For example: i should higher-rank videos that are more recent.
+        console.log("Keywords: ", keywords);
+        console.log("SearchQuery:", query);
+
         const bm25Videos = keywords
             ? await searchWithBM25(keywords, videos)
             : [];

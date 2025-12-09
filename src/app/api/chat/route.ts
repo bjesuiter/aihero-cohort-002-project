@@ -11,9 +11,11 @@ import {
   createUIMessageStream,
   createUIMessageStreamResponse,
   safeValidateUIMessages,
+  stepCountIs,
   streamText,
   UIMessage,
 } from "ai";
+import { searchTool } from "./search-tool";
 import { generateTitleForChat } from "./generate-title";
 
 // Allow streaming responses up to 30 seconds
@@ -91,15 +93,36 @@ export async function POST(req: Request) {
       }
 
       const result = streamText({
-        model: google("gemini-2.5-flash-lite"),
+        model: google("gemini-2.5-flash"),
         messages: convertToModelMessages(messages),
+        tools: { search: searchTool },
+        system: `
+          <task-context>
+          You are a helpful assistant that can search for videos in my 'Watch later' Playlist, 
+          research facts and answer questions about the dataset.
+          </task-context>
+          <rules>
+          - You MUST use the search tool to find information about ALL questions regarding videos, people, dates, or specific information.
+          - NEVER answer from your training data - always search the actual dataset first!
+          - If the first search doesn't find enough information, use the search tool again with different keywords or a different natural language query.
+          - Use both semantic search (searchQuery) and BM25 search (keywords) parameters together for best results. 
+          - Only after searching you should formulate your answer based on the information you found.
+          - If the uses searches for videos in a specific year, include that year as a keyword and in the natural language query to allow searching for publication date.
+          - If the user ask to count videos, tell them that you're search results are limited to the top 10 results.
+          </rules>
+          <the-ask>
+          Here's the users question. Search the dataset first, then provide your answer based on the information you found.
+          </the-ask>
+         >`,
+        // ADDED: Stop after 10 steps to prevent infinite loops
+        stopWhen: [stepCountIs(10)],
       });
 
       writer.merge(
         result.toUIMessageStream({
           sendSources: true,
           sendReasoning: true,
-        })
+        }),
       );
 
       await generateTitlePromise;
