@@ -52,12 +52,10 @@ function ListItemCard({ item }: { item: ListItem }) {
     scoreType: "bm25" | "semantic" | "rrf"
   ) => {
     if (scoreType === "semantic") {
-      // TODO: this percentage stuff seems wrong, so using the raw score for now
-      // return `${(score * 100).toFixed(2)}%`;
-      return `${score.toFixed(2)}`;
+      return `${(score * 100).toFixed(3)}%`;
     }
     if (scoreType === "rrf") {
-      return `${score.toFixed(6)}`;
+      return `${(score * 100).toFixed(3)}%`;
     }
     if (scoreType === "bm25") {
       return `${score.toFixed(2)}`;
