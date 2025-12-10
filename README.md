@@ -88,5 +88,8 @@ You'll add during workshop:
 
 ```bash 
 # Day 1 - Retrieval System
-pnpm reset 02.03.02
+bun reset 02.03.02
+
+# Day 2 - Advanced Retrieval Systems 
+bun reset 04.04.02
 ```
