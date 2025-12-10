@@ -83,3 +83,10 @@ You'll add during workshop:
 - `pnpm run dev` - Start dev server (Turbopack)
 - `pnpm run build` - Build for production
 - `pnpm start` - Start production server
+
+## Project Checkpoints (to view them in another branch)
+
+```bash 
+# Day 1 - Retrieval System
+pnpm reset 02.03.02
+```
