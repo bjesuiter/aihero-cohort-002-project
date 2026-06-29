@@ -36,13 +36,16 @@ Over the course of the workshop, you'll add these capabilities to your assistant
 pnpm install
 ```
 
-2. Set up environment variables (`.env.local`):
+2. Set up environment variables with Varlock:
 
-```bash
-GOOGLE_GENERATIVE_AI_API_KEY=your_key_here
-ANTHROPIC_API_KEY=your_key_here  # optional
-OPENAI_API_KEY=your_key_here      # optional
+```fish
+# Import plaintext secrets once. Package scripts inject DEV_ENV=jb directly.
+varlock keychain import .env.local --project aihero-cohort-002-project --profile jb --write-to .env.jb
+rm .env.local
+DEV_ENV=jb varlock load >/dev/null
 ```
+
+The committed `.env.schema` documents required variables. `.env.jb` contains Keychain resolver refs, not plaintext secrets. No `.env.local` selector file is required.
 
 3. Run dev server:
 

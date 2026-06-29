@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack --port 3100",
-    "build": "next build --turbopack",
-    "start": "next start",
+    "dev": "DEV_ENV=jb varlock run -- next dev --turbopack --port 3100",
+    "build": "DEV_ENV=jb varlock run -- next build --turbopack",
+    "start": "DEV_ENV=jb varlock run -- next start",
     "cherry-pick": "ai-hero-cli cherry-pick --branch=live-run-through",
     "reset": "ai-hero-cli reset --branch=live-run-through"
   },
